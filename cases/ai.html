@@ -1,0 +1,141 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080f1c"><meta name="description" content="Физическое моделирование альтернативных действий и выбор манёвра для самолётов с инерционной динамикой."><title>AI самолётов: прогноз траекторий и тактическое поведение — Малаков Леонид</title><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="../style.css"></head><body><header class="site-header">
+      <div class="shell nav-wrap">
+        <a class="brand" href="../index.html" aria-label="На главную">
+          <span class="brand-mark">Malakov<span class="brand-dot">.</span></span>
+          <span class="brand-description">UNITY / ENGINEERING</span>
+        </a>
+        <nav class="site-nav" aria-label="Основная навигация">
+          <a href="../index.html#projects">Проекты</a>
+          <a href="../index.html#cases">Технические кейсы</a>
+          <a href="../index.html#about">Обо мне</a>
+        </nav>
+        <a class="nav-contact" href="../index.html#contact">Контакты <span aria-hidden="true">↗</span></a>
+      </div>
+    </header><main class="shell"><div class="breadcrumb"><a href="../index.html">Главная</a> / <a href="../index.html#cases">Технические кейсы</a> / 01 / AI · GAMEPLAY</div><div class="article-head"><div class="eyebrow">01 / AI · GAMEPLAY</div><h1>AI самолётов: прогноз траекторий и тактическое поведение</h1><p class="lead">Физическое моделирование альтернативных действий и выбор манёвра для самолётов с инерционной динамикой.</p><div class="article-tags"><span class="pill">Unity / C#</span><span class="pill">PhysicsScene2D</span><span class="pill">Utility AI</span><span class="pill">Behaviour Trees</span><span class="pill">Editor Tools</span></div></div><div class="article-layout"><article class="article-content"><section><h2>Контекст и проблема</h2><p>В Warplane Inc. Online более 150 самолётов с различающимися аэродинамическими характеристиками. Повреждения в бою меняют их поведение в полёте. Индивидуальная настройка поведения AI под каждую модель и состояние повреждений плохо масштабировалась. Требовалось решение, которое использует существующую физику игры и учитывает инерцию, риск столкновений и тактическую задачу.</p><p>Решение должно было работать на мобильных устройствах и допускать развитие от базового пилотирования до сложных игровых сценариев.</p></section><section><h2>Решение: отдельная физическая симуляция</h2><p>Для оценки возможных управляющих воздействий используется отдельная <strong>PhysicsScene2D</strong> с «призрачной» копией самолёта. Перед симуляцией её состояние автоматически синхронизируется с реальным самолётом, включая актуальные аэродинамические параметры и влияние повреждений. Альтернативные действия моделируются из одинакового исходного состояния, не затрагивая физику матча. Один механизм управления работает с разными самолётами и состояниями повреждений без индивидуальной настройки AI под каждую модель.</p><figure class="figure"><div class="flow-diagram"><div class="flow-node">Состояние самолёта<small>скорость, положение, управление</small></div><span class="flow-arrow">→</span><div class="flow-node">Ghost Physics<small>несколько альтернативных манёвров</small></div><span class="flow-arrow">→</span><div class="flow-node">Utility AI<small>оценка безопасности и полезности</small></div><span class="flow-arrow">→</span><div class="flow-node">Управление<small>выбранный манёвр</small></div></div><figcaption>Упрощённая схема принятия решения.</figcaption></figure><p>Кандидаты оцениваются по нескольким критериям: безопасность, достижение цели, возможность атаки и другие условия. Их оценки нормализуются и объединяются в систему Utility AI. Тяжёлые вычисления распределяются по времени, чтобы ограничить нагрузку на кадр.</p></section><section><h2>Инструменты разработки</h2>
+<p>В режиме наблюдения за ботом отладчик позволяет пошагово разбирать принятие решений. После продолжения игры самолёт летит до следующей симуляции, затем игра снова останавливается. Можно изучить альтернативные траектории, выбранный вариант и оценки критериев для каждого кандидата.</p>
+
+<figure class="ai-debug" aria-labelledby="ai-debug-title">
+  <div class="ai-debug__header">
+    <div><span class="ai-debug__eyebrow">AI / VISUAL DEBUGGING</span><h3 id="ai-debug-title">Как исследуется решение бота</h3></div>
+    <span class="ai-debug__badge">Условная схема</span>
+  </div>
+  <div class="ai-debug__grid">
+    <div class="ai-debug__scene">
+      <div class="ai-debug__scene-header"><span>Траектории-кандидаты</span><span>PhysicsScene2D</span></div>
+      <svg class="ai-debug__svg" viewBox="0 0 640 348" role="img" aria-labelledby="ai-plot-title ai-plot-desc" xmlns="http://www.w3.org/2000/svg">
+        <title id="ai-plot-title">Схема прогнозируемых траекторий самолёта</title>
+        <desc id="ai-plot-desc">На светлом небе из точки положения самолёта выходят несколько синих допустимых путей, красный путь заканчивается столкновением с землёй. Зелёным выделен выбранный ботом безопасный путь. Снизу тёмная земля с отчётливой границей.</desc>
+        <defs>
+          <clipPath id="ai-scene-clip"><rect width="640" height="348" rx="10"/></clipPath>
+          <marker id="ai-path-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#087e64"/></marker>
+        </defs>
+        <g clip-path="url(#ai-scene-clip)">
+          <rect width="640" height="348" fill="#e8edf0"/>
+          <g opacity=".55" stroke="#d6dfe4" stroke-width="1">
+            <path d="M0 50 H640 M0 102 H640 M0 154 H640 M0 206 H640 M0 258 H640"/>
+            <path d="M52 0 V348 M104 0 V348 M156 0 V348 M208 0 V348 M260 0 V348 M312 0 V348 M364 0 V348 M416 0 V348 M468 0 V348 M520 0 V348 M572 0 V348 M624 0 V348"/>
+          </g>
+          <!-- Sharp sky / terrain silhouette, intentionally not a gameplay screenshot -->
+          <path d="M0 303 L145 303 L203 308 L268 303 L322 297 L384 306 L437 288 L492 298 L546 251 L593 259 L640 230 L640 348 L0 348 Z" fill="#192530"/>
+          <path d="M0 303 L145 303 L203 308 L268 303 L322 297 L384 306 L437 288 L492 298 L546 251 L593 259 L640 230" fill="none" stroke="#0c151d" stroke-width="3"/>
+          <path d="M98 211 C183 115 306 88 516 76" fill="none" stroke="#3575d7" stroke-width="3" stroke-dasharray="10 9" stroke-linecap="round"/>
+          <path d="M98 211 C196 182 349 179 556 165" fill="none" stroke="#3575d7" stroke-width="3" stroke-dasharray="10 9" stroke-linecap="round"/>
+          <path d="M98 211 C215 220 335 244 478 247" fill="none" stroke="#3575d7" stroke-width="3" stroke-dasharray="10 9" stroke-linecap="round"/>
+          <path d="M98 211 C194 241 287 293 392 323" fill="none" stroke="#d34e56" stroke-width="3.5" stroke-dasharray="10 8" stroke-linecap="round"/>
+          <path d="M98 211 C208 160 347 143 538 129" fill="none" stroke="#ffffff" stroke-width="8" opacity=".87" stroke-linecap="round"/>
+          <path d="M98 211 C208 160 347 143 538 129" fill="none" stroke="#087e64" stroke-width="4.5" stroke-linecap="round" marker-end="url(#ai-path-arrow)"/>
+          <g fill="#3575d7" stroke="#e8edf0" stroke-width="3"><circle cx="516" cy="76" r="7"/><circle cx="556" cy="165" r="7"/><circle cx="478" cy="247" r="7"/></g>
+          <circle cx="539" cy="129" r="9" fill="#e8edf0" stroke="#087e64" stroke-width="4"/>
+          <path d="M384 315 L399 330 M399 315 L384 330" stroke="#e05d63" stroke-width="5" stroke-linecap="round"/>
+          <g transform="translate(99 210) rotate(-6)">
+            <path d="M-31 -9 L-8 -8 L17 -23 L24 -19 L11 -5 L36 0 L36 7 L9 6 L19 25 L11 28 L-10 7 L-31 8 Z" fill="#f8fbfc" stroke="#294b65" stroke-width="3" stroke-linejoin="round"/>
+            <circle cx="-12" cy="0" r="3" fill="#294b65"/>
+          </g>
+          <g font-family="ui-monospace,Consolas,monospace" font-size="15" font-weight="700">
+            <text x="526" y="64" fill="#235cb7">01</text>
+            <text x="548" y="119" fill="#087e64">02</text>
+            <text x="565" y="158" fill="#235cb7">03</text>
+            <text x="399" y="316" fill="#9b2e37">04</text>
+          </g>
+          <path d="M101 188 L126 155" stroke="#34546a" stroke-width="1.8" stroke-dasharray="4 5"/>
+          <text x="130" y="151" font-size="16" font-weight="700" fill="#254354" font-family="Arial,sans-serif">Бот</text>
+        </g>
+      </svg>
+      <div class="ai-debug__legend" aria-label="Обозначения траекторий">
+        <span><i class="ai-line ai-line--blue"></i>Допустимые</span>
+        <span><i class="ai-line ai-line--red"></i>Провальные</span>
+        <span><i class="ai-line ai-line--green"></i>Выбранная</span>
+      </div>
+    </div>
+    <div class="ai-debug__scores">
+      <div class="ai-debug__scores-header"><span>Оценка кандидата</span><strong>02 <span class="ai-debug__selected">выбран</span></strong></div>
+      <p class="ai-debug__scores-intro">Пример сравнения по четырём критериям.</p>
+      <div class="ai-score"><span>Speed</span><span class="ai-score__track" aria-hidden="true"><i style="width:74%"></i></span></div>
+      <div class="ai-score"><span>Safety</span><span class="ai-score__track" aria-hidden="true"><i style="width:91%"></i></span></div>
+      <div class="ai-score"><span>Approach to target</span><span class="ai-score__track" aria-hidden="true"><i style="width:63%"></i></span></div>
+      <div class="ai-score"><span>Attack position</span><span class="ai-score__track" aria-hidden="true"><i style="width:81%"></i></span></div>
+      <div class="ai-debug__result"><span class="ai-debug__result-dot"></span><span>Выбран наиболее подходящий допустимый манёвр</span></div>
+      <p class="ai-debug__score-note">Полосы показывают принцип оценки. Их длина и геометрия траекторий условны.</p>
+    </div>
+  </div>
+  <div class="ai-debug__sequence" aria-label="Последовательность работы отладчика">
+    <div class="ai-debug__step"><span>01</span><strong>Spectate</strong><small>Наблюдение за ботом</small></div>
+    <div class="ai-debug__step"><span>02</span><strong>Pause</strong><small>Остановка перед решением</small></div>
+    <div class="ai-debug__step"><span>03</span><strong>Simulate</strong><small>Прогноз вариантов</small></div>
+    <div class="ai-debug__step"><span>04</span><strong>Evaluate</strong><small>Сравнение критериев</small></div>
+    <div class="ai-debug__step"><span>05</span><strong>Continue</strong><small>Полёт до следующего решения</small></div>
+  </div>
+  <figcaption>Схематичная иллюстрация логики отладки, а не скриншот внутреннего инструмента. Данные и геометрия приведены только для наглядности.</figcaption>
+</figure>
+</section><section><h2>Развитие в 2026 году</h2>
+<p>Поверх физического прогнозирования появился тактический слой: теперь AI разделяет выбор намерения (<strong>что делать</strong>) и подбор управляющего воздействия (<strong>как управлять самолётом</strong>).</p>
+<figure class="ai-arch" aria-labelledby="ai-arch-title">
+  <div class="ai-arch__header">
+    <div><span class="ai-arch__eyebrow">AI / TACTICAL ARCHITECTURE</span><h3 id="ai-arch-title">От намерения к управлению</h3></div>
+    <span class="ai-arch__badge">Условная схема</span>
+  </div>
+
+  <div class="ai-arch__start"><div class="ai-arch__node ai-arch__node--start"><strong>Battle state</strong><small>Состояние боя и окружения</small></div></div>
+  <div class="ai-arch__connector"><svg class="ai-arch__arrow" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v16m-6-6 6 6 6-6"/></svg></div>
+
+  <div class="ai-arch__bands">
+  <div class="ai-arch__band ai-arch__band--tactical">
+    <div class="ai-arch__band-header"><span>TACTICAL LAYER</span><small>Что делать</small></div>
+    <div class="ai-arch__pipeline">
+      <div class="ai-arch__node "><strong>Intent</strong><small>Намерение по правилам и приоритетам</small></div>
+      <div class="ai-arch__step-arrow"><svg class="ai-arch__arrow" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h16m-6-6 6 6-6 6"/></svg></div>
+      <div class="ai-arch__node "><strong>Behaviour Tree</strong><small>Шаги выбранного сценария</small></div>
+      <div class="ai-arch__step-arrow"><svg class="ai-arch__arrow" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h16m-6-6 6 6-6 6"/></svg></div>
+      <div class="ai-arch__node "><strong>Blackboard / Context</strong><small>Цель и ограничения управления</small></div>
+    </div>
+    <p class="ai-arch__band-note">Память и cooldown предотвращают частую смену намерений.</p>
+  </div>
+  <div class="ai-arch__interlevel"><svg class="ai-arch__arrow" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v16m-6-6 6 6 6-6"/></svg><span>Передача цели и ограничений</span></div>
+  <div class="ai-arch__band ai-arch__band--control">
+    <div class="ai-arch__band-header"><span>CONTROL LAYER</span><small>Как управлять</small></div>
+    <div class="ai-arch__utility"><div class="ai-arch__node "><strong>Utility AI / Control selection</strong><small>Подбор действий по полезности</small></div></div>
+    <div class="ai-arch__connector"><svg class="ai-arch__arrow" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v16m-6-6 6 6 6-6"/></svg></div>
+    <div class="ai-arch__pipeline ai-arch__pipeline--control">
+      <div class="ai-arch__node "><strong>Candidate controls</strong><small>Варианты управления</small></div>
+      <div class="ai-arch__step-arrow"><svg class="ai-arch__arrow" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h16m-6-6 6 6-6 6"/></svg></div>
+      <div class="ai-arch__node "><strong>Trajectory simulation</strong><small>Физический прогноз</small></div>
+      <div class="ai-arch__step-arrow"><svg class="ai-arch__arrow" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h16m-6-6 6 6-6 6"/></svg></div>
+      <div class="ai-arch__node "><strong>Trajectory scoring</strong><small>Оценка критериев</small></div>
+      <div class="ai-arch__step-arrow"><svg class="ai-arch__arrow" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h16m-6-6 6 6-6 6"/></svg></div>
+      <div class="ai-arch__node ai-arch__node--chosen"><strong>Chosen control</strong><small>Лучший допустимый вариант</small></div>
+    </div>
+  </div>
+</div>
+  <div class="ai-arch__connector ai-arch__connector--output"><svg class="ai-arch__arrow" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v16m-6-6 6 6 6-6"/></svg></div>
+  <div class="ai-arch__end"><div class="ai-arch__node ai-arch__node--end"><strong>Real airplane</strong><small>Применение выбранного управления</small></div></div>
+  <div class="ai-arch__feedback"><svg viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M3 11a9 9 0 1 1 2.5 6.4M3 4v7h7"/></svg><span>Новое состояние боя → следующий цикл</span></div>
+  <figcaption>Обобщённая архитектура, а не схема классов. Верхний уровень выбирает намерение по правилам; Utility AI оценивает прогнозируемые варианты управления. Контекст задаёт цель и ограничения, но не готовый маршрут.</figcaption>
+</figure>
+<p><strong>Результат:</strong> тактические сценарии на основе Intent и Behaviour Tree используют существующий нижний уровень физического прогнозирования; обновлённый AI внедрён в live-релиз.</p>
+</section><a class="back-link" href="../index.html#cases">← Все технические кейсы</a></article><aside class="article-aside" aria-label="О кейсе"><div class="aside-title">Кратко о проекте</div><dl><div class="aside-item"><dt>Проект</dt><dd>Warplane Inc. Online · Android/iOS</dd></div><div class="aside-item"><dt>Моя роль</dt><dd>Разработка инфраструктуры AI и развитие тактической архитектуры в составе команды.</dd></div><div class="aside-item"><dt>Результат</dt><dd>Решение используется в опубликованной игре</dd></div></dl></aside></div></main><footer class="site-footer">
+      <div class="shell footer-grid">
+        <div><span class="brand-mark">Malakov<span class="brand-dot">.</span></span><p>Unity / C# · Gameplay · Architecture · Mobile Optimization</p></div>
+        <div class="footer-links"><a href="../index.html">Главная</a><a href="../index.html#contact">Контакты ↗</a><a href="https://t.me/lmalakov" target="_blank" rel="noopener noreferrer">Telegram ↗</a></div>
+        <small>© 2026 · Малаков Леонид</small>
+      </div>
+    </footer></body></html>

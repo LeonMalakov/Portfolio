@@ -1,0 +1,32 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080f1c"><meta name="description" content="Поддержка социальных и стратегических механик поверх мобильного мультиплеера."><title>Клиент и сервер мета-игры: глобальная карта и кланы — Малаков Леонид</title><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="../style.css"></head><body><header class="site-header">
+      <div class="shell nav-wrap">
+        <a class="brand" href="../index.html" aria-label="На главную">
+          <span class="brand-mark">Malakov<span class="brand-dot">.</span></span>
+          <span class="brand-description">UNITY / ENGINEERING</span>
+        </a>
+        <nav class="site-nav" aria-label="Основная навигация">
+          <a href="../index.html#projects">Проекты</a>
+          <a href="../index.html#cases">Технические кейсы</a>
+          <a href="../index.html#about">Обо мне</a>
+        </nav>
+        <a class="nav-contact" href="../index.html#contact">Контакты <span aria-hidden="true">↗</span></a>
+      </div>
+    </header><main class="shell"><div class="breadcrumb"><a href="../index.html">Главная</a> / <a href="../index.html#cases">Технические кейсы</a> / 04 / BACKEND · ARCHITECTURE</div><div class="article-head"><div class="eyebrow">04 / BACKEND · ARCHITECTURE</div><h1>Клиент и сервер мета-игры: глобальная карта и кланы</h1><p class="lead">Поддержка социальных и стратегических механик поверх мобильного мультиплеера.</p><div class="article-tags"><span class="pill">TypeScript / Node.js</span><span class="pill">Docker</span><span class="pill">Firebase RTDB</span><span class="pill">Cloud Functions</span><span class="pill">Unity / C#</span></div></div><div class="article-layout"><article class="article-content"><section><h2>Продуктовая задача</h2>
+<p>Для Warplane Inc. Online была разработана стратегическая мета-игра с глобальной картой, кланами и социальными функциями. Фича расширяет игровой процесс за пределы отдельных матчей, добавляя социальное взаимодействие и механики ежедневной активности.</p>
+<p>Цель системы — поддерживать долгосрочную вовлечённость игроков и создавать дополнительные причины возвращаться в игру.</p></section>
+<section><h2>Архитектура и моя роль</h2>
+<p>Разрабатывал основную логику Unity-клиента и серверную часть мета-игры. Для хранения состояния используется <strong>Firebase Realtime Database</strong>; в серверной инфраструктуре применяются <strong>TypeScript/Node.js, Docker и Firebase Cloud Functions</strong>. Помимо перерасчёта игрового мира система поддерживает социальные механики — кланы и чаты, включая публикацию и перевод сообщений на другие языки, а также очистку устаревших данных.</p>
+<figure class="figure"><div class="flow-diagram"><div class="flow-node">Unity-клиент<small>карта, кланы, действия игроков</small></div><span class="flow-arrow">↔</span><div class="flow-node">Firebase RTDB<small>состояние и действия</small></div><span class="flow-arrow">↔</span><div class="flow-node">Серверная обработка<small>обновление игрового мира</small></div></div><figcaption>Упрощённая схема взаимодействия клиента и сервера.</figcaption></figure>
+<p>Массовые записи игровых действий и заработанных очков клиенты выполняют непосредственно в выделенный раздел RTDB. Доступ и допустимые операции ограничиваются правилами безопасности базы. Архитектура проектировалась с учётом минимизации затрат на Firebase без необходимости проводить каждую клиентскую запись через отдельный серверный обработчик.</p></section>
+<section><h2>Надёжность фоновой обработки</h2>
+<p><strong>Двойная буферизация.</strong> Перед очередным перерасчётом cron-джоба переключает клиентский буфер записи, фиксируя накопленные действия игроков; новые действия продолжают записываться в другой раздел. Обновлённое состояние мира рассчитывается в неактивном серверном буфере. Только после завершения обработки серверный буфер переключается, и клиенты начинают читать новое состояние.</p>
+<p><strong>Перезапускаемость по этапам.</strong> Джоба сохраняет информацию об успешно завершённых этапах и при повторном запуске не выполняет их заново. Незавершённый этап можно безопасно пересчитать из исходного состояния: повторная обработка не приводит к потере результатов или повторному начислению, что важно для длительных операций обновления игрового мира.</p></section>
+<section><h2>Результат</h2>
+<p>Клиентская и серверная части мета-игры поэтапно внедрялись в live-продукт в нескольких итерациях и продолжают использоваться. Поскольку параллельно выпускались другие обновления игры и проводились продуктовые эксперименты, изолировать влияние мета-игры на D30–D90 retention не представляется возможным.</p></section>
+<a class="back-link" href="../index.html#cases">← Все технические кейсы</a></article><aside class="article-aside" aria-label="О кейсе"><div class="aside-title">Кратко о проекте</div><dl><div class="aside-item"><dt>Проект</dt><dd>Warplane Inc. Online · Android/iOS</dd></div><div class="aside-item"><dt>Моя роль</dt><dd>Разработка основной клиентской и серверной частей мета-игры.</dd></div><div class="aside-item"><dt>Результат</dt><dd>Система внедрена в live-продукт</dd></div></dl></aside></div></main><footer class="site-footer">
+      <div class="shell footer-grid">
+        <div><span class="brand-mark">Malakov<span class="brand-dot">.</span></span><p>Unity / C# · Gameplay · Architecture · Mobile Optimization</p></div>
+        <div class="footer-links"><a href="../index.html">Главная</a><a href="../index.html#contact">Контакты ↗</a><a href="https://t.me/lmalakov" target="_blank" rel="noopener noreferrer">Telegram ↗</a></div>
+        <small>© 2026 · Малаков Леонид</small>
+      </div>
+    </footer></body></html>
